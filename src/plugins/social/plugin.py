@@ -468,22 +468,16 @@ class SocialPlugin(BasePlugin[SocialConfig]):
 
     # Retrieve font from Google Fonts
     def _load_font_from_google(self, name):
-        url = "https://fonts.google.com/download?family={}"
-        res = requests.get(url.format(name.replace(" ", "+")), stream = True)
+        filename = os.path.join(self.cache, f"{name}-Regular.ttf")
+        url = "https://github.com/google/fonts/raw/main/ofl/{}/{}%5Bwdth,wght%5D.ttf"
+        formatted_url = url.format(name.replace(" ", "").lower(), name.replace(" ", ""))
 
-        # Write archive to temporary file
-        tmp = TemporaryFile()
-        for chunk in res.iter_content(chunk_size = 32768):
-            tmp.write(chunk)
+        res = requests.get(formatted_url, stream=True, timeout=5)
+        with open(filename, "wb") as f:
+            for chunk in res.iter_content(chunk_size=32768):
+                f.write(chunk)
 
-        # Unzip fonts from temporary file
-        zip = ZipFile(tmp)
-        files = [file for file in zip.namelist() if file.endswith(".ttf") or file.endswith(".otf")]
-        zip.extractall(self.cache, files)
-
-        # Close and delete temporary file
-        tmp.close()
-        return files
+        return [filename]
 
 # -----------------------------------------------------------------------------
 # Data
